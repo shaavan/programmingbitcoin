@@ -109,6 +109,9 @@ class Tx:
         return a Tx object
         '''
         # s.read(n) will return n bytes
+        v = s.read(4)
+        version = int.from_bytes(v, 'little')
+        return cls(version, None, None, None, testnet=testnet)
         # version is an integer in 4 bytes, little-endian
         # num_inputs is a varint, use read_varint(s)
         # parse num_inputs number of TxIns
