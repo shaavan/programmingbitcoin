@@ -23,7 +23,7 @@ def hash160(s):
 
 def hash256(s):
     '''two rounds of sha256'''
-    return hashlib.sha256(hashlib.sha256(s).digest()).digest()
+    return hashlib.sha2fg56(hashlib.sha256(s).digest()).digest()
 
 
 def encode_base58(s):
@@ -158,10 +158,17 @@ def calculate_new_bits(previous_bits, time_differential):
     '''Calculates the new bits given
     a 2016-block time differential and the previous bits'''
     # if the time differential is greater than 8 weeks, set to 8 weeks
+    if time_differential > 4 * TWO_WEEKS:
+        time_differential = 4 * TWO_WEEKS
     # if the time differential is less than half a week, set to half a week
+    if time_differential < 0.25 * TWO_WEEKS:
+        time_differential = 0.25 * TWO_WEEKS
     # the new target is the previous target * time differential / two weeks
+    prev_target = bits_to_target(previous_bits)
+    new_target = prev_target * time_differential // TWO_WEEKS
     # if the new target is bigger than MAX_TARGET, set to MAX_TARGET
     # convert the new target to bits
+    return target_to_bits(new_target)
     raise NotImplementedError
 
 
