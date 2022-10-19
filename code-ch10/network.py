@@ -51,22 +51,38 @@ class NetworkEnvelope:
         if magic != expected_magic:
             raise RuntimeError('magic is not right {} vs {}'.format(magic.hex(), expected_magic.hex()))
         # command 12 bytes
+        command = s.read(12)
         # strip the trailing 0's
+        command = command.strip(b'\x00')
         # payload length 4 bytes, little endian
+        payload_length = little_endian_to_int(s.read(4))
         # checksum 4 bytes, first four of hash256 of payload
+        checksum = s.read(4)
         # payload is of length payload_length
+        payload = s.read(payload_length)
         # verify checksum
+        calculated_checksum = hash256(payload)[:4]
+        if checksum != calculated_checksum:
+            raise RuntimeError("Error here as well")
         # return an instance of the class
+        return cls(command, payload, testnet=testnet)
         raise NotImplementedError
 
     def serialize(self):
         '''Returns the byte serialization of the entire network message'''
         # add the network magic
+        s = self.magic
         # command 12 bytes
+        s += self.command
         # fill with 0's
+        s += b'\x00' * (12 - len(self.command))
         # payload length 4 bytes, little endian
+        s += int_to_little_endian(len(self.payload), 4)
         # checksum 4 bytes, first four of hash256 of payload
+        s += hash256(self.payload)[:4]
         # payload
+        s += self.payload
+        return s
         raise NotImplementedError
 
     def stream(self):
@@ -134,18 +150,34 @@ class VersionMessage:
     def serialize(self):
         '''Serialize this message to send over the network'''
         # version is 4 bytes little endian
+        s = int_to_little_endian(self.version, 4)
         # services is 8 bytes little endian
+        s += int_to_little_endian(self.services, 8)
         # timestamp is 8 bytes little endian
+        s += int_to_little_endian(self.timestamp, 8)
         # receiver services is 8 bytes little endian
+        s += int_to_little_endian(self.receiver_services, 8)
         # IPV4 is 10 00 bytes and 2 ff bytes then receiver ip
+        s += b'\x00' * 10 + b'\xff' * 2 + self.receiver_ip
         # receiver port is 2 bytes, big endian
+        s += int_to_little_endian(self.receiver_port, 2)[::-1]
         # sender services is 8 bytes little endian
+        s += int_to_little_endian(self.sender_services, 8)
         # IPV4 is 10 00 bytes and 2 ff bytes then sender ip
+        s += b'\x00' * 10 + b'\xff' * 2 + self.sender_ip
         # sender port is 2 bytes, big endian
+        s += int_to_little_endian(self.sender_port, 2)[::-1]
         # nonce should be 8 bytes
+        s += self.nonce
         # useragent is a variable string, so varint first
+        s += encode_varint(len(self.user_agent))
+        s += self.user_agent
         # latest block is 4 bytes little endian
+        s += int_to_little_endian(self.latest_block, 4)
         # relay is 00 if false, 01 if true
+        s += b'\x01' if self.relay else b'\x00'
+        
+        return s
         raise NotImplementedError
 
 
