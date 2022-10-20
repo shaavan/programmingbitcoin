@@ -253,9 +253,14 @@ class GetHeadersMessage:
     def serialize(self):
         '''Serialize this message to send over the network'''
         # protocol version is 4 bytes little-endian
+        s = int_to_little_endian(self.version, 4)
         # number of hashes is a varint
+        s += encode_varint(self.num_hashes)
         # start block is in little-endian
+        s += self.start_block[::-1]
         # end block is also in little-endian
+        s += self.end_block[::-1]
+        return s
         raise NotImplementedError
 
 
@@ -318,9 +323,12 @@ class SimpleNode:
         '''Do a handshake with the other node.
         Handshake is sending a version message and getting a verack back.'''
         # create a version message
+        version = VersionMessage()
         # send the command
+        self.send(version)
         # wait for a verack message
-        raise NotImplementedError
+        self.wait_for(VerAckMessage)
+#         raise NotImplementedError
     # tag::source4[]
 
     def send(self, message):  # <1>
