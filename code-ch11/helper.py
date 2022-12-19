@@ -176,6 +176,7 @@ def calculate_new_bits(previous_bits, time_differential):
 def merkle_parent(hash1, hash2):
     '''Takes the binary hashes and calculates the hash256'''
     # return the hash256 of hash1 + hash2
+    return hash256(hash1 + hash2)
     raise NotImplementedError
 
 
@@ -183,13 +184,21 @@ def merkle_parent_level(hashes):
     '''Takes a list of binary hashes and returns a list that's half
     the length'''
     # if the list has exactly 1 element raise an error
+    if len(hashes) == 1:
+        raise Exception("Only one element was provided")
     # if the list has an odd number of elements, duplicate the last one
     # and put it at the end so it has an even number of elements
+    if len(hashes) % 2:
+        hashes.append(hashes[-1])
     # initialize next level
+    parent_level = []
     # loop over every pair (use: for i in range(0, len(hashes), 2))
+    for i in range(0, len(hashes), 2):
+        parent_level.append(merkle_parent(hashes[i], hashes[i+1]))
         # get the merkle parent of the hashes at index i and i+1
         # append parent to parent level
     # return parent level
+    return parent_level
     raise NotImplementedError
 
 
@@ -197,9 +206,13 @@ def merkle_root(hashes):
     '''Takes a list of binary hashes and returns the merkle root
     '''
     # current level starts as hashes
+    current_level = hashes
     # loop until there's exactly 1 element
+    while len(current_level) > 1:
         # current level becomes the merkle parent level
+        current_level = merkle_parent_level(current_level)
     # return the 1st item of the current level
+    return current_level[0]
     raise NotImplementedError
 
 
